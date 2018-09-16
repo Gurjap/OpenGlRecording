@@ -34,6 +34,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Button;
 
 import com.example.android.opengl.gles.Drawable2d;
 import com.example.android.opengl.gles.EglCore;
@@ -53,19 +54,7 @@ import java.lang.ref.WeakReference;
  * shows, and the use needs to swipe up from the bottom to get the navigation buttons to appear.
  */
 
-public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callback, Choreographer.FrameCallback {
-
-
-
-
-    // mMVPMatrix is an abbreviation for "Model View Projection Matrix"
-    private final float[] mMVPMatrix = new float[16];
-    private final float[] mProjectionMatrix = new float[16];
-    private final float[] mViewMatrix = new float[16];
-    private final float[] mRotationMatrix = new float[16];
-
-
-
+public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callback, Choreographer.FrameCallback, View.OnClickListener {
 
 
 
@@ -80,7 +69,7 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
     private int mSelectedRecordMethod;                  // current radio button
 
     private RenderThread mRenderThread;
-
+    private Button recordingButton;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,18 +80,13 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
         setContentView(R.layout.activity);
         mGLView=findViewById(R.id.fboActivity_surfaceView);
         mGLView.getHolder().addCallback(this);
+        recordingButton=findViewById(R.id.toggleRecording_button);
+        recordingButton.setOnClickListener(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // TODO: we might want to stop recording here.  As it is, we continue "recording",
-        //       which is pretty boring since we're not outputting any frames (test this
-        //       by blanking the screen with the power button).
-
-        // If the callback was posted, remove it.  This stops the notifications.  Ideally we
-        // would send a message to the thread letting it know, so when it wakes up it can
-        // reset its notion of when the previous Choreographer event arrived.
         Log.d(TAG, "onPause unhooking choreographer");
         Choreographer.getInstance().removeFrameCallback(this);
     }
@@ -177,50 +161,6 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
             rh.sendSurfaceChanged(format, width, height);
         }
     }
-    /**
-     * Utility method for compiling a OpenGL shader.
-     *
-     * <p><strong>Note:</strong> When developing shaders, use the checkGlError()
-     * method to debug shader coding errors.</p>
-     *
-     * @param type - Vertex or fragment shader type.
-     * @param shaderCode - String containing the shader code.
-     * @return - Returns an id for the shader.
-     */
-    public static int loadShader(int type, String shaderCode){
-
-        // create a vertex shader type (GLES20.GL_VERTEX_SHADER)
-        // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
-        int shader = GLES20.glCreateShader(type);
-
-        // add the source code to the shader and compile it
-        GLES20.glShaderSource(shader, shaderCode);
-        GLES20.glCompileShader(shader);
-
-        return shader;
-    }
-
-    /**
-     * Utility method for debugging OpenGL calls. Provide the name of the call
-     * just after making it:
-     *
-     * <pre>
-     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-     * MyGLRenderer.checkGlError("glGetUniformLocation");</pre>
-     *
-     * If the operation is not successful, the check throws an error.
-     *
-     * @param glOperation - Name of the OpenGL call to check.
-     */
-    public static void checkGlError(String glOperation) {
-        int error;
-        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-            Log.e(TAG, glOperation + ": glError " + error);
-            throw new RuntimeException(glOperation + ": glError " + error);
-        }
-    }
-
-
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
@@ -261,19 +201,19 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
             rh.sendDoFrame(frameTimeNanos);
         }
     }
-    /**
-     * onClick handler for "record" button.
-     * <p>
-     * Ideally we'd grey out the button while in a state of transition, e.g. while the
-     * MediaMuxer finishes creating the file, and in the (very brief) period before the
-     * SurfaceView's surface is created.
-     */
-    public void clickToggleRecording(@SuppressWarnings("unused") View unused) {
-        Log.d(TAG, "clickToggleRecording");
-        RenderHandler rh = mRenderThread.getHandler();
-        if (rh != null) {
-            mRecordingEnabled = !mRecordingEnabled;
-            rh.setRecordingEnabled(mRecordingEnabled);
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.toggleRecording_button:
+                RenderHandler rh = mRenderThread.getHandler();
+                if (rh != null) {
+                    mRecordingEnabled = !mRecordingEnabled;
+                    if(mRecordingEnabled)recordingButton.setText("Stop Recording");
+                    else recordingButton.setText("Start Recording");
+
+                        rh.setRecordingEnabled(mRecordingEnabled);
+                }
         }
     }
 
