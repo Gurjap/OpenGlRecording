@@ -18,23 +18,33 @@ package com.example.android.opengl;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.Environment;
 import android.util.Log;
+
+import java.io.File;
 
 /**
  * Provides drawing instructions for a GLSurfaceView object. This class
  * must override the OpenGL ES drawing lifecycle methods:
  * <ul>
- *   <li>{@link GLSurfaceView.Renderer#onSurfaceCreated}</li>
- *   <li>{@link GLSurfaceView.Renderer#onDrawFrame}</li>
- *   <li>{@link GLSurfaceView.Renderer#onSurfaceChanged}</li>
+ *   <li>{@link android.opengl.GLSurfaceView.Renderer#onSurfaceCreated}</li>
+ *   <li>{@link android.opengl.GLSurfaceView.Renderer#onDrawFrame}</li>
+ *   <li>{@link android.opengl.GLSurfaceView.Renderer#onSurfaceChanged}</li>
  * </ul>
  */
-public class MyCustomRenderer implements GLSurfaceView.Renderer {
+public class MyGLRenderer implements GLSurfaceView.Renderer {
 
-    private static final String TAG = "MyCustomRenderer";
+
+    private Context context;
+    MyGLRenderer(Context context){
+        this.context=context;
+    }
+
+    private static final String TAG = "MyGLRenderer";
     private Triangle mTriangle;
     private Square   mSquare;
 
@@ -49,6 +59,8 @@ public class MyCustomRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
 
+
+        //File outputFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "/video1.mp4");
         // Set the background frame color
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -126,5 +138,42 @@ public class MyCustomRenderer implements GLSurfaceView.Renderer {
 
         return shader;
     }
+
+    /**
+    * Utility method for debugging OpenGL calls. Provide the name of the call
+    * just after making it:
+    *
+    * <pre>
+    * mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
+    * MyGLRenderer.checkGlError("glGetUniformLocation");</pre>
+    *
+    * If the operation is not successful, the check throws an error.
+    *
+    * @param glOperation - Name of the OpenGL call to check.
+    */
+    public static void checkGlError(String glOperation) {
+        int error;
+        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
+            Log.e(TAG, glOperation + ": glError " + error);
+            throw new RuntimeException(glOperation + ": glError " + error);
+        }
+    }
+
+    /**
+     * Returns the rotation angle of the triangle shape (mTriangle).
+     *
+     * @return - A float representing the rotation angle.
+     */
+    public float getAngle() {
+        return mAngle;
+    }
+
+    /**
+     * Sets the rotation angle of the triangle shape (mTriangle).
+     */
+    public void setAngle(float angle) {
+        mAngle = angle;
+    }
+
 
 }

@@ -202,6 +202,7 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
         }
     }
 
+
     @Override
     public void onClick(View view) {
         switch (view.getId()){
