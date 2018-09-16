@@ -15,7 +15,9 @@
  */
 package com.example.android.opengl;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.opengl.GLES20;
@@ -28,6 +30,9 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Choreographer;
 import android.view.Surface;
@@ -54,7 +59,7 @@ import java.lang.ref.WeakReference;
  * shows, and the use needs to swipe up from the bottom to get the navigation buttons to appear.
  */
 
-public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callback, Choreographer.FrameCallback, View.OnClickListener {
+public class OpenGLES20Activity extends AppCompatActivity implements SurfaceHolder.Callback, Choreographer.FrameCallback, View.OnClickListener {
 
 
 
@@ -76,14 +81,65 @@ public class OpenGLES20Activity extends Activity implements SurfaceHolder.Callba
 
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity
-        mSelectedRecordMethod = RECMETHOD_FBO;
-        setContentView(R.layout.activity);
-        mGLView=findViewById(R.id.fboActivity_surfaceView);
-        mGLView.getHolder().addCallback(this);
-        recordingButton=findViewById(R.id.toggleRecording_button);
-        recordingButton.setOnClickListener(this);
-    }
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
 
+            // Permission is not granted
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+            } else {
+                // No explanation needed; request the permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        1);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        } else {
+            mSelectedRecordMethod = RECMETHOD_FBO;
+            setContentView(R.layout.activity);
+            mGLView=findViewById(R.id.fboActivity_surfaceView);
+            mGLView.getHolder().addCallback(this);
+            recordingButton=findViewById(R.id.toggleRecording_button);
+            recordingButton.setOnClickListener(this);
+        }
+
+
+
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mSelectedRecordMethod = RECMETHOD_FBO;
+                    setContentView(R.layout.activity);
+                    mGLView=findViewById(R.id.fboActivity_surfaceView);
+                    mGLView.getHolder().addCallback(this);
+                    recordingButton=findViewById(R.id.toggleRecording_button);
+                    recordingButton.setOnClickListener(this);
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request.
+        }
+    }
     @Override
     protected void onPause() {
         super.onPause();
